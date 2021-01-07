@@ -154,7 +154,7 @@ func (tg *testGroup) test(testNumber int, evalInterval time.Duration, groupOrder
 		testStart := time.Now()
 		fmt.Printf("DEBUG: Starting test %d\n", testNumber)
 		defer func() {
-			fmt.Printf("DEBUG: Test %d finished, took %v\n", testNumber, time.Now().Sub(testStart))
+			fmt.Printf("DEBUG: Test %d finished, took %v\n", testNumber, time.Since(testStart))
 		}()
 	}
 
