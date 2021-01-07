@@ -39,11 +39,11 @@ import (
 
 // RulesUnitTest does unit testing of rules based on the unit testing files provided.
 // More info about the file format can be found in the docs.
-func RulesUnitTest(files ...string) int {
+func RulesUnitTest(debug bool, files ...string) int {
 	failed := false
 
 	for _, f := range files {
-		if errs := ruleUnitTest(f); errs != nil {
+		if errs := ruleUnitTest(debug, f); errs != nil {
 			fmt.Fprintln(os.Stderr, "  FAILED:")
 			for _, e := range errs {
 				fmt.Fprintln(os.Stderr, e.Error())
@@ -60,7 +60,7 @@ func RulesUnitTest(files ...string) int {
 	return 0
 }
 
-func ruleUnitTest(filename string) []error {
+func ruleUnitTest(debug bool, filename string) []error {
 	fmt.Println("Unit Testing: ", filename)
 
 	b, err := ioutil.ReadFile(filename)
@@ -94,8 +94,8 @@ func ruleUnitTest(filename string) []error {
 
 	// Testing.
 	var errs []error
-	for _, t := range unitTestInp.Tests {
-		ers := t.test(evalInterval, groupOrderMap, unitTestInp.RuleFiles...)
+	for i, t := range unitTestInp.Tests {
+		ers := t.test(i, evalInterval, groupOrderMap, debug, unitTestInp.RuleFiles...)
 		if ers != nil {
 			errs = append(errs, ers...)
 		}
@@ -149,7 +149,15 @@ type testGroup struct {
 }
 
 // test performs the unit tests.
-func (tg *testGroup) test(evalInterval time.Duration, groupOrderMap map[string]int, ruleFiles ...string) []error {
+func (tg *testGroup) test(testNumber int, evalInterval time.Duration, groupOrderMap map[string]int, debug bool, ruleFiles ...string) []error {
+	if debug {
+		testStart := time.Now()
+		fmt.Printf("DEBUG: Starting test %d\n", testNumber)
+		defer func() {
+			fmt.Printf("DEBUG: Test %d finished, took %v\n", testNumber, time.Now().Sub(testStart))
+		}()
+	}
+
 	// Setup testing suite.
 	suite, err := promql.NewLazyLoader(nil, tg.seriesLoadingString())
 	if err != nil {
@@ -360,6 +368,32 @@ Outer:
 		if !reflect.DeepEqual(expSamples, gotSamples) {
 			errs = append(errs, errors.Errorf("    expr: %q, time: %s,\n        exp:%#v\n        got:%#v", testCase.Expr,
 				testCase.EvalTime.String(), parsedSamplesString(expSamples), parsedSamplesString(gotSamples)))
+		}
+	}
+
+	if debug {
+		ts := tg.maxEvalTime()
+		// Potentially a test can be specified at a time with fractional seconds,
+		// which PromQL cannot represent, so round up to the next whole second.
+		ts = (ts + time.Second).Truncate(time.Second)
+		expr := fmt.Sprintf(`{__name__=~".+"}[%v]`, ts)
+		q, err := suite.QueryEngine().NewInstantQuery(suite.Queryable(), expr, mint.Add(ts))
+		if err != nil {
+			fmt.Printf("DEBUG: Failed querying, expr: %q, err: %v\n", expr, err)
+			return errs
+		}
+		res := q.Exec(suite.Context())
+		if res.Err != nil {
+			fmt.Printf("DEBUG: Failed query exec, expr: %q, err: %v\n", expr, res.Err)
+			return errs
+		}
+		switch v := res.Value.(type) {
+		case promql.Matrix:
+			fmt.Printf("DEBUG: Dump of all data (input_series and rules) at %v:\n", ts)
+			fmt.Println(v.String())
+		default:
+			fmt.Printf("DEBUG: Got unexpected type %T\n", v)
+			return errs
 		}
 	}
 

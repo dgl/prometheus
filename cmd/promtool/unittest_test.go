@@ -69,7 +69,7 @@ func TestRulesUnitTest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := RulesUnitTest(tt.args.files...); got != tt.want {
+			if got := RulesUnitTest(false, tt.args.files...); got != tt.want {
 				t.Errorf("RulesUnitTest() = %v, want %v", got, tt.want)
 			}
 		})

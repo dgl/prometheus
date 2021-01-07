@@ -116,6 +116,7 @@ func main() {
 		"test-rule-file",
 		"The unit test file.",
 	).Required().ExistingFiles()
+	testRulesDebug := testRulesCmd.Flag("debug", "Enable unit test debugging.").Bool()
 
 	defaultDBPath := "data/"
 	tsdbCmd := app.Command("tsdb", "Run tsdb commands.")
@@ -192,7 +193,7 @@ func main() {
 		os.Exit(QueryLabels(*queryLabelsServer, *queryLabelsName, *queryLabelsBegin, *queryLabelsEnd, p))
 
 	case testRulesCmd.FullCommand():
-		os.Exit(RulesUnitTest(*testRulesFiles...))
+		os.Exit(RulesUnitTest(*testRulesDebug, *testRulesFiles...))
 
 	case tsdbBenchWriteCmd.FullCommand():
 		os.Exit(checkErr(benchmarkWrite(*benchWriteOutPath, *benchSamplesFile, *benchWriteNumMetrics)))
