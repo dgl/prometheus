@@ -22,6 +22,10 @@ You can use `promtool` to test your rules.
 rule_files:
   [ - <file_name> ]
 
+# Interval to evaluate the rules loaded from rule_files at.
+# This usually should match your global evaluation_interval in the Prometheus
+configuration file.
+# Any interval given in the rule files themselves is ignored.
 [ evaluation_interval: <duration> | default = 1m ]
 
 # The order in which group names are listed below will be the order of evaluation of
@@ -39,7 +43,10 @@ tests:
 
 ``` yaml
 # Series data
+
+# Interval to use between samples in the input_series. Usually the same as or a multiple of evaluation_interval.
 interval: <duration>
+
 input_series:
   [ - <series> ]
 
