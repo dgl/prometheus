@@ -53,6 +53,7 @@ import (
 	klogv2 "k8s.io/klog/v2"
 
 	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/cmd/promtool" // Hack!
 	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/discovery/legacymanager"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
@@ -243,6 +244,11 @@ func main() {
 	if os.Getenv("DEBUG") != "" {
 		runtime.SetBlockProfileRate(20)
 		runtime.SetMutexProfileFraction(20)
+	}
+
+	if len(os.Args) >= 1 && filepath.Base(os.Args[0]) == "promtool" {
+		promtool.Main()
+		return
 	}
 
 	var (

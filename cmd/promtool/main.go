@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package promtool
 
 import (
 	"bytes"
@@ -77,7 +77,7 @@ const (
 
 var lintOptions = []string{lintOptionAll, lintOptionDuplicateRules, lintOptionNone}
 
-func main() {
+func Main() {
 	var (
 		httpRoundTripper   = api.DefaultRoundTripper
 		serverURL          *url.URL
