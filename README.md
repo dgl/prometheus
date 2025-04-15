@@ -1,4 +1,5 @@
 test1
+test2
 # Prometheus 
 
 [![Build Status](https://travis-ci.org/prometheus/prometheus.svg)][travis]
